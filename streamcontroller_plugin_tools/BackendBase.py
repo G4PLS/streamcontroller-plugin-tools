@@ -17,9 +17,12 @@ class BackendBase(rpyc.Service):
         self.frontend = None
         self.server: ThreadedServer = None
 
+        self.DATA_PATH = None
+
         self.connect_to_frontend()
         self.start_server()
         self.register_to_frontend()
+        self.setup_logger()
 
     def connect_to_frontend(self):
         port = self.get_args().port
@@ -50,3 +53,21 @@ class BackendBase(rpyc.Service):
             parser.print_help()
             sys.exit()
         return args
+
+    def exposed_set_data_path(self, data_path):
+        self.DATA_PATH = data_path
+
+    def setup_logger():
+        if not self.DATA_PATH:
+            log.error("Wasn't able to setup backend logging sink")
+            return
+
+        log.add(
+            sink=os.path.join(self.DATA_PATH, "logs/backend.log"),
+            backtrace=True,
+            diagnose=True,
+            level="TRACE",
+            rotation="3 Days",
+            compression="zip",
+            enqueue=True
+        )
